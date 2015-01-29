@@ -1,0 +1,113 @@
+// This file contains a SUGGESTION for the structure of your program.  You
+// may change any of it, or add additional files to this directory (package),
+// as long as you conform to the project specification.
+
+// Comments that start with "//" are intended to be removed from your
+// solutions.
+package jump61;
+
+import java.util.ArrayList;
+
+/** An automated Player.
+ *  @author
+ */
+class AI extends Player {
+
+    /** Time allotted to all but final search depth (milliseconds). */
+    private static final long TIME_LIMIT = 15000;
+
+    /** Number of calls to minmax between checks of elapsed time. */
+    private static final long TIME_CHECK_INTERVAL = 10000;
+
+    /** Number of milliseconds in one second. */
+    private static final double MILLIS = 1000.0;
+
+    /** A new player of GAME initially playing COLOR that chooses
+     *  moves automatically.
+     */
+    AI(Game game, Side color) {
+        super(game, color);
+    }
+
+    @Override
+    void makeMove() {
+        // FIXME
+    	//choose highest value (or if equal, some value) by calling minmax
+    	//minmax will return a value that represents a move
+    	//call game.makeMove()
+    	ArrayList<Integer> bestMoves = new ArrayList<Integer>();//single integers that represent the square number
+    	int depth = 4;
+    	int cutoff = Integer.MAX_VALUE;
+    	this.minmax(this.getSide(), this.getBoard(), depth, cutoff, bestMoves);//at the end of minmax, bestMoves contains BESTMOVES
+    	//one way to do it, bestMoves contains THE BEST move. At each level of Array, clear if better than BEST
+    	int r = this.getBoard().row(bestMoves.get(0));
+    	int c = this.getBoard().col(bestMoves.get(0));
+    	this.getGame().makeMove(r, c);
+    }
+
+    /** Return the minimum of CUTOFF and the minmax value of board B
+     *  (which must be mutable) for player P to a search depth of D
+     *  (where D == 0 denotes statically evaluating just the next move).
+     *  If MOVES is not null and CUTOFF is not exceeded, set MOVES to
+     *  a list of all highest-scoring moves for P; clear it if
+     *  non-null and CUTOFF is exceeded. the contents of B are
+     *  invariant over this call. */
+    private int minmax(Side p, Board b, int d, int cutoff,
+                       ArrayList<Integer> moves) {
+        // REPLACE WITH SOLUTION
+
+    	//current confusion: Best so far?
+
+    	//start by getting a list of possible moves
+    		//assume game is not over (there are possible moves)
+    		//if depth == 0, staticEval immediately (we are at a leaf)
+    		//if there are possible moves, check if we should use min-max by using cutoff and best so far
+    			//if we should evaluate the move, EVALUATION = RUNNING THE MOVE on that Board. And
+    			//passing into minmax that NEW BOARDSTATE.
+    	//call minmax on each of those moves
+    	//minmax on each move will generate a value
+    	//moves[] is where the best moves are stored
+
+    	//Example
+    	//minmax(Player, B, d=4, cutoff = infinity, [])
+    		//d > 0
+    		//generate possibleMoves[] --> [2,3] , [1,5]
+    		//for each int[] in possibleMoves[], check if we SHOULD do MINMAX on that MOVE??
+    		//minMax(Player.opposite(), B.makeMove(2,3), d = 3, cutoff = ??)
+
+    	//if at leaf
+    	if (d == 0) {
+    		return this.staticEval(p, b);
+    	}
+    	//get possibleMoves
+    	ArrayList<int[]> possibleMoves = new ArrayList<int[]>();
+    	for (int r = 1; r <= this.getBoard().size(); r++) {
+    		for (int c = 1; c <= this.getBoard().size(); c++) {
+    			if (this.getBoard().get(r, c).getSide().equals(p)) {//if the two sides are same (red red)
+    				possibleMoves.add(new int[]{r,c});
+    			}
+    		}
+    	}
+    	//for each possibleMove, make the move and pass in that board state to recursive call Min-Max
+    	for (int[] move : possibleMoves) {
+    		this.getGame().makeMove(move[0], move[1]);//ensure that makeMove changes this.getBoard()
+    		this.minmax(p.opposite(), this.getBoard(), d - 1, -cutoff, moves);//this returns a value.
+    	}
+
+        return 0;
+    }
+
+    /** Returns heuristic value of board B for player P.
+     *  Higher is better for P. */
+    private int staticEval(Side p, Board b) {
+        // REPLACE WITH SOLUTION
+        //return 0;
+
+    	//pretty dumb algorithm, return the difference between my number of squares and opponent number of squares
+    	int myCount = this.getBoard().numOfSide(p);
+    	int oppCount = this.getBoard().numOfSide(p.opposite());
+    	return myCount - oppCount;
+
+    }
+
+}

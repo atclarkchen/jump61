@@ -1,0 +1,20 @@
+#Test4: Testing AI's.
+staff-jump61
+staff-jump61
+===#1===
+size 2
+auto Red
+manual Blue
+start
+%mr
+%ib...
+%e
+quit
+===#2===
+size 2
+auto Blue
+manual Red
+start
+%ir...
+%e
+quit

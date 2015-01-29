@@ -1,0 +1,331 @@
+// This file contains a SUGGESTION for the structure of your program.  You
+// may change any of it, or add additional files to this directory (package),
+// as long as you conform to the project specification.
+
+// Comments that start with "//" are intended to be removed from your
+// solutions.
+package jump61;
+
+import static jump61.Side.*;
+import static jump61.Square.square;
+
+import java.util.ArrayList;
+import java.util.Stack;
+
+/** A Jump61 board state that may be modified.
+ *  @author ClarkChen
+ */
+
+/** Possible Overfull Algorithm
+ * AddSpot:
+ * 1. Check if adding spot causes square to be overFull, if not, simply add Spot!
+ * 2. if add spot causes square to be overfull, set overFull Square to 1. Get an array of neighbors. Call addSpot on each neighbor.\
+ * Carlos:
+ * First addSpot: responsible for just adding one spot, if it is overfull, call 2nd addspot.
+ * 2nd addspot: call overfull, rec, check if
+
+ */
+
+class MutableBoard extends Board {
+
+    /** An N x N board in initial configuration. */
+    MutableBoard(int N) {
+        // FIXME
+    	//should also fill with white squares
+
+    	_board = new Square[N][N];
+    	for (int r = 0; r < N; r++) {
+    		for (int c = 0; c < N; c++) {
+    			_board[r][c] = Square.square(WHITE, 0);
+    		}
+    	}
+
+    	_moves = new ArrayList<int[]>();
+    	whiteCount = size() * size();
+    	redCount = blueCount = 0;
+    	totalSpots = 9;
+
+    	history = new Stack<SquareX>();
+    }
+
+    /** A board whose initial contents are copied from BOARD0, but whose
+     *  undo history is clear. */
+    MutableBoard(Board board0) {
+        // FIXME
+    	//copy board0
+    	this(board0.size());
+    	this.copy(board0);
+    }
+
+    @Override
+    void clear(int N) {
+        // FIXME
+        announce();
+
+        //
+        _board = new Square[N][N];
+        _moves = new ArrayList<int[]>();
+    }
+
+    @Override
+    void copy(Board board) {
+        // FIXME
+    	for (int i = 0; i < size() * size(); i++) {//iterate through square #'s (1-8) in board of 9 squares
+    		Square s = get(i);//get accounts for -1
+    		_board[row(i)-1][col(i)-1] = square(s.getSide(), s.getSpots());
+    	}
+    }
+
+    /** Copy the contents of BOARD into me, without modifying my undo
+     *  history.  Assumes BOARD and I have the same size. */
+    private void internalCopy(MutableBoard board) {
+        // FIXME
+    }
+
+    @Override
+    int size() {
+        // REPLACE WITH SOLUTION
+        return _board.length;
+    }
+
+    @Override
+    Square get(int n) {
+        // REPLACE WITH SOLUTION
+
+    	int r = row(n);//gets you row (numbered their way: numbered 1 to size)
+    	int c = col(n);//gets you col (numbered their way)
+    	return _board[r-1][c-1];//row 2 is actually row 1 in my board[][]
+    }
+
+    @Override
+    int numOfSide(Side side) {
+        // REPLACE WITH SOLUTION
+    	if (side == RED) {
+    		return redCount;
+    	}
+    	if (side == BLUE) {
+    		return blueCount;
+    	} else {
+    		return whiteCount;
+    	}
+    }
+
+    @Override
+    int numPieces() {
+        // REPLACE WITH SOLUTION
+        return 0;
+    }
+
+    /** gets an array of Neighbor indices. */
+    ArrayList<int[]> getNeighbors(int r, int c) {
+    	ArrayList<int[]> neighbors = new ArrayList<int[]>();
+    	//check all 4 possible spots for neighbors
+    	if (this.exists(r - 1, c)) {//check above
+    		neighbors.add(new int[]{r-1, c});
+    	}
+    	if (this.exists(r, c + 1)) {//check right
+    		neighbors.add(new int[]{r, c + 1});
+    	}
+    	if (this.exists(r + 1, c)) {//check below
+    		neighbors.add(new int[]{r + 1, c});
+    	}
+    	if (this.exists(r, c-1)) {//check left
+    		neighbors.add(new int[]{r, c - 1});
+    	}
+    	return neighbors;
+    }
+
+    @Override
+    /** ADD1. DOES NON-OVERFULL CASE. CALLS ADD2 (if overfull).
+     * assumes isLegal*/
+    /** Note that undo is supposed to revert to NON-EXPLOSIVE case.*/
+
+    void addSpot(Side player, int r, int c) {
+        // FIXME
+        announce();
+
+        //FIRST TO BE CALLED. Must handle first nonOVERFULL CASE
+        int n = this.sqNum(r, c);
+        Square s = get(n);
+
+        int spotCount = s.getSpots() + 1;
+        if (spotCount > this.neighbors(n)) {//spot is overfull, call ADD2
+        	history.add(sentinel);//first sentinel to WRAP group
+        	SquareX sx = new SquareX(s, r, c);
+        	addSpot(player, n);//call ADD2
+
+        } else {//not overfull, just add 1 spot to the square
+        		//push the unmodified Square and Info into HISTORY
+        	SquareX sx = new SquareX(s, r, c);//takes in square BEFORE modification
+        		//update square on board
+        	Square sq = Square.square(player, spotCount);
+        	this.internalSet(n, sq);
+        }
+        System.out.println("Side is: " + player);
+        System.out.println("the square at [" + r + "," + c + "] has side " + _board[r][c].getSide() + " and spotcount " + _board[r][c].getSpots());
+    }
+
+    /** ADD 2, does OVERFULL CASES.*/
+
+    @Override
+    void addSpot(Side player, int n) {
+        // FIXME
+        announce();
+
+        //ONLY HANDLES OVERFULL CASE
+
+        //set own spotCount to 1
+        int r = row(n);
+        int c = col(n);
+        _board[r-1][c-1] = Square.square(player, 1);
+
+        //1. Find/get neighbors
+        ArrayList<int[]> neighbors = this.getNeighbors(r, c);
+
+        //call addSpot ADD1 to each neighbor
+        	//if that results in overfull case, ADD1 will call this ADD
+        for (int[] info : neighbors) {//info is [int r, int c]
+        	int i = info[0];
+        	int j = info[1];
+        	this.addSpot(player, i, j);//calling ADD1
+        }
+        //AT THE END OF THIS RECURSION, ADD A SENTINEL TO WRAP UP THE GROUP
+        history.add(sentinel);
+    }
+
+    @Override
+    void set(int r, int c, int num, Side player) {
+        internalSet(sqNum(r, c), square(player, num));
+    }
+
+    @Override
+    void set(int n, int num, Side player) {//NUM is the number of spots
+        internalSet(n, square(player, num));
+        announce();
+    }
+
+    @Override
+    /** Look at moves history STACK.*/
+    /** Pop first item off stack and ensure that board looks like that condition. */
+    void undo() {
+        // FIXME
+    	if (history.isEmpty()) {
+    		return;
+    	}
+    	if (history.peek() != null) {//if next is not SENTINEL, just undo THAT ONE MOVE.
+    		SquareX x = history.pop();
+    		//do stuff with x
+    	} else {//next IS SENTINEL
+    		SquareX sq = history.pop();// this should be the OVERFULL SQUAREX
+    		//do stuff with sq
+    		while(history.peek() != null) {// while we have not encountered THE SECOND, ENDING SENTINEL
+        		SquareX s = history.pop();
+        		//do stuff with s
+    		}
+    	}
+    }
+
+    /** Record the beginning of a move in the undo history. */
+    private void markUndo() {
+        // FIXME
+
+    }
+
+    /** Set the contents of the square with index IND to SQ. Update counts
+     *  of numbers of squares of each color.  */
+    private void internalSet(int ind, Square sq) {
+        // FIXME
+    	int r = row(ind);
+    	int c = col(ind);
+    	Side s0 = _board[r-1][c-1].getSide();
+    	_board[r-1][c-1] = Square.square(sq.getSide(), sq.getSpots());//update contents of Board Square
+    	if (sq.getSide() == RED) {
+    		if (s0 == RED) {//just update REDCOUNT
+    			this.redCount ++;
+    		} else {//original s0 is NOT red
+        		if (s0 == WHITE) {
+        			this.redCount ++;
+        			this.whiteCount --;
+        		}
+        		if (s0 == BLUE) {
+        			this.redCount ++;
+        			this.blueCount --;
+        		}
+    		}
+    	}
+    	else if (sq.getSide() == BLUE) {
+    		if (s0 == BLUE) {//just update BLUECOUNT
+    			this.blueCount ++;
+    		} else {//original s0 is NOT blue
+        		if (s0 == WHITE) {
+        			this.blueCount ++;
+        			this.whiteCount --;
+        		}
+        		if (s0 == RED) {//red turns into blue.
+        			this.blueCount ++;
+        			this.redCount --;
+        		}
+    		}
+    	} else {//sq is WHITE. so just update WhiteCount
+    		this.whiteCount ++;
+    	}
+    	/*//check if square is overFull
+    	if (_board[r-1][c-1].getSpots() > this.neighbors(ind)) {
+    		int[] info = new int[]{row(ind), col(ind), _board[r-1][c-1].getSpots()};//row and col are NON-1
+    		this.overFull.add(info);
+    	}
+    	//call overFull() regardless
+    	this.overFull(); */
+    }
+
+    /** boolean helper method to check if square is overFull. */
+    boolean isOverFull(int r, int c) {
+    	if (_board[r - 1][c - 1].getSpots() > this.neighbors(r, c)) {
+    		return true;
+    	}
+    	return false;
+    }
+
+
+    /** Notify all Observers of a change. */
+    private void announce() {
+        setChanged();
+        notifyObservers();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof MutableBoard)) {
+            return obj.equals(this);
+        } else {
+            // REPLACE WITH SOLUTION
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        // REPLACE WITH SOLUTION.  RETURN A NUMBER THAT IS THE SAME FOR BOARDS
+        // WITH IDENTICAL CONTENTS (IT NEED NOT BE DIFFERENT IF THE BOARDS
+        // DIFFER.)  THE CURRENT STATEMENT WORKS, BUT IS NOT PARTICULARLY
+        // EFFICIENT.
+        return 0;
+    }
+
+    /** Private fields */
+    private Square[][] _board;
+    //list of moves
+    private ArrayList<int[]> _moves;
+    /** Counts for colors, to be used for numOfSide */
+    private int redCount;
+    private int blueCount;
+    private int whiteCount;
+    /** total running spot count, to be used for numPieces */
+    private int totalSpots;
+
+    /** stack or queue of NON-EXPLOSIVE MOVES.*/
+    /** A typical "move" is [int r, int c, int spots]*/
+    //private Stack<int[]> moves;
+    private Stack<SquareX> history;
+    private SquareX sentinel = new SquareX();
+}

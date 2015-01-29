@@ -1,0 +1,158 @@
+// This file contains a SUGGESTION for the structure of your program.  You
+// may change any of it, or add additional files to this directory (package),
+// as long as you conform to the project specification.
+
+// Comments that start with "//" are intended to be removed from your
+// solutions.
+package jump61;
+
+import static jump61.Side.*;
+
+import java.util.Stack;
+
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/** Unit tests of Boards.
+ *  @author
+ */
+public class BoardTest {
+
+    private static final String NL = System.getProperty("line.separator");
+
+
+    @Test
+    public void testSize() {
+        Board B = new MutableBoard(5);
+        assertEquals("bad length", 5, B.size());
+        ConstantBoard C = new ConstantBoard(B);
+        assertEquals("bad length", 5, C.size());
+        //System.out.println("C is: ");
+        //System.out.println(C);
+        Board D = new MutableBoard(C);//just checks if 2nd constructor works
+        assertEquals("bad length", 5, C.size());
+    }
+
+    @Test
+    public void testCopy() {
+    	Board B = new MutableBoard(5);
+    	B.set(2, 2, 2, RED);
+    	B.set(3, 3, 2, BLUE);
+    	System.out.println("B is: ");
+    	System.out.println(B);
+    	Board C = new MutableBoard(B);
+    	System.out.println("C is: ");
+    	System.out.println(C);
+    }
+
+    @Test
+    public void testSet() {
+        Board B = new MutableBoard(5);
+        B.set(2, 2, 1, RED);
+        assertEquals("wrong number of spots", 1, B.get(2, 2).getSpots());
+        assertEquals("wrong color", RED, B.get(2, 2).getSide());
+        assertEquals("wrong count", 1, B.numOfSide(RED));
+        assertEquals("wrong count", 0, B.numOfSide(BLUE));
+        assertEquals("wrong count", 24, B.numOfSide(WHITE));
+    }
+
+    @Test
+    public void testHistory() {
+    	//System.out.println("TESTHISTORY");
+
+        Board B = new MutableBoard(6);
+        checkBoard("#0", B);
+        B.addSpot(RED, 1, 1);//history is size 1. [1 1 white 1]
+        checkBoard("#1", B, 1, 1, 2, RED);
+
+        B.addSpot(BLUE, 2, 1);//history is size 2 [2 1 white 1]
+        //System.out.println("test #2");
+        checkBoard("#2", B, 1, 1, 2, RED, 2, 1, 2, BLUE);
+
+        B.addSpot(RED, 1, 1);//this move is overfull, add sentinel. history is size 3 [1 1 2r]
+        //add prior-to-overfull state. history is size 4
+        //add prior-to-overfull for neighbor1. history is size 5
+        //add prior-to-overfull for neighbor2. history is size 6.
+        //done recursing. add sentinel. history is size 7
+        checkBoard("#3", B, 1, 1, 1, RED, 2, 1, 3, RED, 1, 2, 2, RED);//current problem. Overfull square. SOLVED.
+        Stack<SquareX> history = B.getHistory();
+        assertEquals(history.size(), 7); //SIZE PASSED
+
+        assertEquals(history.peek().isSentinel(), true);//top of stack should be sentinel
+
+        //let's see what history looks like
+        SquareX s;
+        B.undo();//will undo overFull move and two sub-moves that resulted from it
+        checkBoard("#2U", B, 1, 1, 2, RED, 2, 1, 2, BLUE);
+        assertEquals(history.size(), 2);//popped 2 sentinels, 1 overfull move, and 2 sub-moves.
+    }
+    @Test
+    public void testMove() {
+    	//System.out.println("TESTMOVE");
+
+        Board B = new MutableBoard(6);
+
+        assertEquals(36, B.numPieces());
+        checkBoard("#0", B);
+        B.addSpot(RED, 1, 1);
+        assertEquals(37, B.numPieces());
+
+        checkBoard("#1", B, 1, 1, 2, RED);
+
+        B.addSpot(BLUE, 2, 1);
+        //System.out.println("test #2");
+        checkBoard("#2", B, 1, 1, 2, RED, 2, 1, 2, BLUE);
+        assertEquals(38, B.numPieces());
+
+        B.addSpot(RED, 1, 1);
+        checkBoard("#3", B, 1, 1, 1, RED, 2, 1, 3, RED, 1, 2, 2, RED);//current problem. Overfull square. SOLVED.
+        assertEquals(39, B.numPieces());
+
+        B.undo();
+        checkBoard("#2U", B, 1, 1, 2, RED, 2, 1, 2, BLUE);
+        assertEquals(38, B.numPieces());
+
+        B.undo();
+        checkBoard("#1U", B, 1, 1, 2, RED);
+
+        B.undo();
+        checkBoard("#0U", B);
+
+        //System.out.println("number of reds: " + B.numOfSide(RED));
+        //System.out.println("number of blues: " + B.numOfSide(BLUE));
+        //System.out.println("number of whites: " + B.numOfSide(WHITE));
+    }
+
+    /** Checks that B conforms to the description given by CONTENTS.
+     *  CONTENTS should be a sequence of groups of 4 items:
+     *  r, c, n, s, where r and c are row and column number of a square of B,
+     *  n is the number of spots that are supposed to be there and s is the
+     *  color (RED or BLUE) of the square.  All squares not listed must
+     *  be WHITE with one spot.  Raises an exception signaling a unit-test
+     *  failure if B does not conform. */
+    private void checkBoard(String msg, Board B, Object... contents) {
+        for (int k = 0; k < contents.length; k += 4) {
+            String M = String.format("%s at %d %d", msg, contents[k],
+                                     contents[k + 1]);
+            assertEquals(M, (int) contents[k + 2],
+                         B.get((int) contents[k],
+                               (int) contents[k + 1]).getSpots());
+            assertEquals(M, contents[k + 3],
+                         B.get((int) contents[k],
+                               (int) contents[k + 1]).getSide());
+        }
+        int c;
+        c = 0;
+        for (int i = B.size() * B.size() - 1; i >= 0; i -= 1) {
+            assertTrue("bad white square #" + i,
+                       (B.get(i).getSide() != WHITE)
+                       || (B.get(i).getSpots() == 1));
+            if (B.get(i).getSide() != WHITE) {
+                c += 1;
+            }
+        }
+        assertEquals("extra squares filled", contents.length / 4, c);
+    }
+
+}

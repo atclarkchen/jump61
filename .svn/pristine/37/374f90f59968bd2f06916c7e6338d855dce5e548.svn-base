@@ -1,0 +1,10 @@
+# Test1: Set
+staff-jump61
+None
+===#1===
+size 2
+start
+set 2 2 2 r
+dump
+quit
+===#2===

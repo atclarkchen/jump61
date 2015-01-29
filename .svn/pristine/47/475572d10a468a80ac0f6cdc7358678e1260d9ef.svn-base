@@ -1,0 +1,34 @@
+package jump61;
+
+/** Class that contains a Square, Board Indices, and Whether or not it is OVERFULL.*/
+/** Objects to be added into move History to facilitate UNDO.*/
+/** Boolean exists so that when UNDOING, you can pop off all previous
+ * 		NOT OVERFUL MOVES and STOP ONLY AFTER POPPING OFF AN OVERFLOWED MOVE.
+ * INSTEAD OF BOOLEAN:
+ * Use a SENTINEL that is PUSHED ONTO STACK when I CALL MARKUNDO().
+ * When UNDO is called, POP UNTIL HIT SENTINEL.
+ * Therefore,
+ * If I make a move that results in an OVERFULL square, when that SQUARE EXPLODES,
+ * ALL FOLLOWING MOVES are PART OF THE SAME MOVE GROUP.
+ *
+ * BETTER EXPLANATION:
+ * use SENTINELS ONLY for WRAPPING cases with OVERFULL.
+ * M1 M2
+ * 	add M3 (but M3 is overfull) M3a-M3c are resulting, Non overfull cases that came from the explosion.
+ * M1 M2 Sent. M3 M3a M3b M3c Sent.
+ * */
+public class SquareX {
+	public SquareX() {//sentinel!
+		//hopefully SquareX object is = to NULL.
+	}
+	public SquareX(Square sq, int row, int col) {
+		this.square = sq;
+		this.r = row;
+		this.c = col;
+	}
+
+/** Private Fields. */
+	private Square square; //gives me access to SIDE and SPOTS
+	private int r;
+	private int c;
+}

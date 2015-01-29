@@ -1,0 +1,188 @@
+// This file contains a SUGGESTION for the structure of your program.  You
+// may change any of it, or add additional files to this directory (package),
+// as long as you conform to the project specification.
+
+// Comments that start with "//" are intended to be removed from your
+// solutions.
+package jump61;
+
+import java.util.ArrayList;
+
+/** An automated Player.
+ *  @author
+ */
+class AI extends Player {
+
+    /** Time allotted to all but final search depth (milliseconds). */
+    private static final long TIME_LIMIT = 15000;
+
+    /** Number of calls to minmax between checks of elapsed time. */
+    private static final long TIME_CHECK_INTERVAL = 10000;
+
+    /** Number of milliseconds in one second. */
+    private static final double MILLIS = 1000.0;
+
+    /** A new player of GAME initially playing COLOR that chooses
+     *  moves automatically.
+     */
+    AI(Game game, Side color) {
+        super(game, color);
+    }
+
+    @Override
+    void makeMove() {
+        // FIXME
+    	//choose highest value (or if equal, some value) by calling minmax
+    	//minmax will return a value that represents a move
+    	//call game.makeMove()
+    	ArrayList<Integer> bestMoves = new ArrayList<Integer>();//single integers that represent the square number
+    	int depth = 4;
+    	int cutoff = -Integer.MAX_VALUE;
+    	this.minmax(this.getSide(), this.getBoard(), depth, cutoff, bestMoves);//at the end of minmax, bestMoves contains BESTMOVES
+    	//one way to do it, bestMoves contains THE BEST move. At each level of Array, clear if better than BEST
+
+    	//this.minmaxTemp(this.getSide(), this.getBoard(), 4, bestMove, 1);
+
+    	//PROBLEM: CRASHES IN MINMAX
+    	System.out.println("number of bestMoves: " + bestMoves.size());
+    	//problem sometimes bestMoves is empty because there simply is no best move after MInmax because opponent is
+    	//guaranteed to win
+    	//SOLN: IF SIZE OF BESTMOVES IS 0, JUST ADD ANY LEGAL MOVE.
+
+    	int r;
+    	int c;
+
+    	ArrayList<int[]> possibleMoves;
+    	if (bestMoves.size() == 0) {//IF THERE ARE NO BEST-CASE MOVES
+    		 possibleMoves = new ArrayList<int[]>();
+        	for (int i = 1; i <= this.getBoard().size(); i++) {
+        		for (int j = 1; j <= this.getBoard().size(); j++) {
+        			if (this.getBoard().isLegal(this.getSide(), i, j)) {
+        				possibleMoves.add(new int[]{i,j});
+        			}
+        		}
+        	}
+        	r = possibleMoves.get(0)[0];//just get first legal move
+        	c = possibleMoves.get(0)[1];
+    	}
+    	else {//bestMOVES HAS MOVES
+        	r = this.getBoard().row(bestMoves.get(0));
+        	c = this.getBoard().col(bestMoves.get(0));
+    	}
+
+    	System.out.println("AI r: " + r);
+    	System.out.println("AI c: " + c);
+    	this.getGame().makeMove(r, c);//[r,c] 1, 2 is NOT LEGAL. Player is RED but SQuare is BLUE.
+    }
+
+    /** Return the minimum of CUTOFF and the minmax value of board B
+     *  (which must be mutable) for player P to a search depth of D
+     *  (where D == 0 denotes statically evaluating just the next move).
+     *  If MOVES is not null and CUTOFF is not exceeded, set MOVES to
+     *  a list of all highest-scoring moves for P; clear it if
+     *  non-null and CUTOFF is exceeded. the contents of B are
+     *  invariant over this call. */
+
+    /*private int minmaxTemp(Side p, Board b, int d, int[] bestMove, int maximizer) {
+    	if (b.getWinner() != null) {//if there is a winner
+    		if (b.getWinner().equals(p)) {
+    			return Integer.MAX_VALUE;
+    		} else {
+    			return -Integer.MAX_VALUE;
+    		}
+    	}
+    }*/
+
+    private int minmax(Side p, Board b, int d, int cutoff,
+                       ArrayList<Integer> moves) {
+        // REPLACE WITH SOLUTION
+
+    	//CHECK FOR WIN or LOSS
+    	if (b.getWinner() != null) {//if there is a winner
+    		if (b.getWinner().equals(p)) {
+    			System.out.println(p + "has won!");
+    			return Integer.MAX_VALUE;
+    		} else {
+    			System.out.println(p.opposite() + "has won!");
+    			return -Integer.MAX_VALUE;
+    		}
+    	}
+
+    	//get possible LEGAL moves
+    	ArrayList<int[]> possibleMoves = new ArrayList<int[]>();
+    	for (int r = 1; r <= this.getBoard().size(); r++) {
+    		for (int c = 1; c <= this.getBoard().size(); c++) {
+    			if (b.isLegal(p, r, c)) {
+    				possibleMoves.add(new int[]{r,c});
+    			}
+    		}
+    	}
+
+    	//if at leaf
+    	if (d == 0) {
+    		//go through each possible move, get the static eval of each board (move) and put the moves onto my moveList and return the value
+    	   	int bestEval = -Integer.MAX_VALUE;
+    		for (int[] move : possibleMoves) {
+    			Board moveBoard = new MutableBoard(b);
+    			moveBoard.addSpot(p, move[0], move[1]);
+    			int heuristic = this.staticEval(p, moveBoard);
+    			if (heuristic > bestEval) {
+    				//System.out.println("heuristic is: " + heuristic);
+    				bestEval = heuristic;
+    				moves.clear();
+    				moves.add(b.sqNum(move[0], move[1]));
+    			}
+    		}
+    		return bestEval;
+
+    	}
+
+
+    	/*for (int r = 1; r <= this.getBoard().size(); r++) {
+    		for (int c = 1; c <= this.getBoard().size(); c++) {
+    			if (b.isLegal(p, r, c)) {
+    				possibleMoves.add(new int[]{r,c});
+    			}
+    		}
+    	}*/
+
+    	int bestSoFar = -Integer.MAX_VALUE;
+
+    	//for each possibleMove, make the move and pass in that board state to recursive call Min-Max
+    	for (int[] move : possibleMoves) {
+    		Board newBoard = new MutableBoard(b);
+    		//System.out.println("move[] is: " + move[0] + ", " + move[1]);
+    		newBoard.addSpot(p, move[0], move[1]);
+    		System.out.println("newBoard: ");
+    		System.out.println(newBoard);
+    		//int response = this.minmax(p.opposite(), newBoard, d - 1, -bestSoFar, new ArrayList<Integer>());//this returns a value.
+    		int response = this.minmax(p.opposite(), newBoard, d - 1, -bestSoFar, new ArrayList<Integer>());//this returns a value.
+    		if (-response > bestSoFar) {
+    			//clear the list and add to list
+    			moves.clear();
+    			moves.add(this.getBoard().sqNum(move[0], move[1]));
+    			bestSoFar = -response;
+    			if (-response >= cutoff) {
+    	    		break;
+	    		}
+    		}
+    	}
+
+        return bestSoFar;
+    }
+
+    /** Returns heuristic value of board B for player P.
+     *  Higher is better for P. */
+    private int staticEval(Side p, Board b) {
+        // REPLACE WITH SOLUTION
+        //return 0;
+
+    	//pretty dumb algorithm, return the difference between my number of squares and opponent number of squares
+    	int myCount = b.numOfSide(p);
+    	System.out.println("myCount in eval: " + myCount);
+    	int oppCount = b.numOfSide(p.opposite());
+    	System.out.println("oppCount in eval: " + oppCount);
+    	return myCount - oppCount;
+    }
+
+}

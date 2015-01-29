@@ -1,0 +1,12 @@
+# Test 3: staff program plays small game with both sides automated and come up with a winner
+staff-jump61
+None
+===#1===
+size 3
+auto Red
+auto Blue
+start
+%rb
+%e
+quit
+===#2===

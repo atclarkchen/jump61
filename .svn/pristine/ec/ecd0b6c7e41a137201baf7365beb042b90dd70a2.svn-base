@@ -1,0 +1,128 @@
+package jump61;
+
+import java.util.ArrayList;
+
+/** An automated Player.
+ *  @author ClarkChen
+ */
+class AI extends Player {
+
+    /** Time allotted to all but final search depth (milliseconds). */
+    private static final long TIME_LIMIT = 15000;
+
+    /** Number of calls to minmax between checks of elapsed time. */
+    private static final long TIME_CHECK_INTERVAL = 10000;
+
+    /** Number of milliseconds in one second. */
+    private static final double MILLIS = 1000.0;
+
+    /** A new player of GAME initially playing COLOR that chooses
+     *  moves automatically.
+     */
+    AI(Game game, Side color) {
+        super(game, color);
+    }
+
+    @Override
+    void makeMove() {
+        ArrayList<Integer> bestMoves = new ArrayList<Integer>();
+        int depth = 4;
+        int cutoff = -Integer.MAX_VALUE;
+        this.minmax(this.getSide(), this.getBoard(), depth, cutoff, bestMoves);
+
+        int r;
+        int c;
+
+        ArrayList<int[]> possibleMoves;
+        if (bestMoves.size() == 0) {
+            possibleMoves = new ArrayList<int[]>();
+            for (int i = 1; i <= this.getBoard().size(); i++) {
+                for (int j = 1; j <= this.getBoard().size(); j++) {
+                    if (this.getBoard().isLegal(this.getSide(), i, j)) {
+                        possibleMoves.add(new int[]{i, j});
+                    }
+                }
+            }
+            r = possibleMoves.get(0)[0];
+            c = possibleMoves.get(0)[1];
+        } else {
+            r = this.getBoard().row(bestMoves.get(0));
+            c = this.getBoard().col(bestMoves.get(0));
+        }
+        this.getGame().makeMove(r, c);
+        this.getGame().reportMove(this.getSide(), r, c);
+    }
+
+    /** Return the minimum of CUTOFF and the minmax value of board B
+     *  (which must be mutable) for player P to a search depth of D
+     *  (where D == 0 denotes statically evaluating just the next move).
+     *  If MOVES is not null and CUTOFF is not exceeded, set MOVES to
+     *  a list of all highest-scoring moves for P; clear it if
+     *  non-null and CUTOFF is exceeded. the contents of B are
+     *  invariant over this call. */
+
+
+    private int minmax(Side p, Board b, int d, int cutoff,
+                       ArrayList<Integer> moves) {
+
+        if (b.getWinner() != null) {
+            if (b.getWinner().equals(p)) {
+                return Integer.MAX_VALUE;
+            } else {
+                return -Integer.MAX_VALUE;
+            }
+        }
+
+        ArrayList<int[]> possibleMoves = new ArrayList<int[]>();
+        for (int r = 1; r <= this.getBoard().size(); r++) {
+            for (int c = 1; c <= this.getBoard().size(); c++) {
+                if (b.isLegal(p, r, c)) {
+                    possibleMoves.add(new int[]{r, c});
+                }
+            }
+        }
+
+
+        if (d == 0) {
+            int bestEval = -Integer.MAX_VALUE;
+            for (int[] move : possibleMoves) {
+                Board moveBoard = new MutableBoard(b);
+                moveBoard.addSpot(p, move[0], move[1]);
+                int heuristic = this.staticEval(p, moveBoard);
+                if (heuristic > bestEval) {
+                    bestEval = heuristic;
+                    moves.clear();
+                    moves.add(b.sqNum(move[0], move[1]));
+                }
+            }
+            return bestEval;
+        }
+        int bestSoFar = -Integer.MAX_VALUE;
+
+        for (int[] move : possibleMoves) {
+            Board newBoard = new MutableBoard(b);
+            newBoard.addSpot(p, move[0], move[1]);
+            ArrayList<Integer> x = new ArrayList<Integer>();
+            int response = minmax(p.opposite(), newBoard, d - 1, -bestSoFar, x);
+            if (-response > bestSoFar) {
+                moves.clear();
+                moves.add(this.getBoard().sqNum(move[0], move[1]));
+                bestSoFar = -response;
+                if (-response >= cutoff) {
+                    break;
+                }
+            }
+        }
+
+        return bestSoFar;
+    }
+
+    /** Returns heuristic value of board B for player P.
+     *  Higher is better for P. */
+    private int staticEval(Side p, Board b) {
+
+        int myCount = b.numOfSide(p);
+        int oppCount = b.numOfSide(p.opposite());
+        return myCount - oppCount;
+    }
+}

@@ -1,0 +1,223 @@
+// This file contains a SUGGESTION for the structure of your program.  You
+// may change any of it, or add additional files to this directory (package),
+// as long as you conform to the project specification.
+
+// Comments that start with "//" are intended to be removed from your
+// solutions.
+package jump61;
+
+import static jump61.Side.*;
+import static jump61.Square.square;
+
+import java.util.ArrayList;
+import java.util.Stack;
+
+/** A Jump61 board state that may be modified.
+ *  @author
+ */
+class MutableBoard extends Board {
+
+    /** An N x N board in initial configuration. */
+    MutableBoard(int N) {
+        // FIXME
+    	//should also fill with white squares
+
+    	_board = new Square[N][N];
+    	for (int r = 0; r < N; r++) {
+    		for (int c = 0; c < N; c++) {
+    			_board[r][c] = Square.square(WHITE, 0);
+    		}
+    	}
+
+    	_moves = new ArrayList<int[]>();
+    	whiteCount = size() * size();
+    	redCount = blueCount = 0;
+    	totalSpots = 9;
+    	overFullSquares = new Stack<Square>();
+    }
+
+    /** A board whose initial contents are copied from BOARD0, but whose
+     *  undo history is clear. */
+    MutableBoard(Board board0) {
+        // FIXME
+    	//copy board0
+    	this(board0.size());
+    	this.copy(board0);
+    }
+
+    @Override
+    void clear(int N) {
+        // FIXME
+        announce();
+
+        //
+        _board = new Square[N][N];
+        _moves = new ArrayList<int[]>();
+    }
+
+    @Override
+    void copy(Board board) {
+        // FIXME
+    	for (int i = 0; i < size() * size(); i++) {//iterate through square #'s (1-8) in board of 9 squares
+    		Square s = get(i);//get accounts for -1
+    		_board[row(i)-1][col(i)-1] = square(s.getSide(), s.getSpots());
+    	}
+    }
+
+    /** Copy the contents of BOARD into me, without modifying my undo
+     *  history.  Assumes BOARD and I have the same size. */
+    private void internalCopy(MutableBoard board) {
+        // FIXME
+    }
+
+    @Override
+    int size() {
+        // REPLACE WITH SOLUTION
+        return _board.length;
+    }
+
+    @Override
+    Square get(int n) {
+        // REPLACE WITH SOLUTION
+
+    	int r = row(n);//gets you row (numbered their way: numbered 1 to size)
+    	int c = col(n);//gets you col (numbered their way)
+    	return _board[r-1][c-1];//row 2 is actually row 1 in my board[][]
+    }
+
+    @Override
+    int numOfSide(Side side) {
+        // REPLACE WITH SOLUTION
+    	if (side == RED) {
+    		return redCount;
+    	}
+    	if (side == BLUE) {
+    		return blueCount;
+    	} else {
+    		return whiteCount;
+    	}
+    }
+
+    @Override
+    int numPieces() {
+        // REPLACE WITH SOLUTION
+        return 0;
+    }
+
+    @Override
+    /** assumes isLegal*/
+    /** must take into account POSSIBLE CHAIN REACTION*/
+    void addSpot(Side player, int r, int c) {
+        // FIXME
+        announce();
+        // just add spot for now (not taking into account overFull)
+        int n = this.sqNum(r, c);
+        this.addSpot(player, n);
+
+        	//must update numPieces (totalSpots)
+        	//check neighbors.
+    }
+
+    /** Helper Method for overFull case. */
+    /** Place overFull square in */
+    void overFull() {
+
+    }
+
+    @Override
+    void addSpot(Side player, int n) {
+        // FIXME
+        announce();
+        //just add spots to Squares (don't worry about overFull squares just yet)
+        	//assume that n is the number of the square
+        System.out.println("ADD SPOT");
+        int r = row(n);
+        int c = col(n);
+        System.out.println("[r,c] is: " + r + ", " + c);//unmodified R and C
+        Square s = get(n);
+
+        int spotCount = s.getSpots() + 1;
+
+        this.set(r, c, spotCount, player);
+        System.out.println("Side is: " + player);
+        System.out.println("the square at [" + r + "," + c + " ] has side " + _board[r][c].getSide() + " and spotcount " + _board[r][c].getSpots());
+    }
+
+    @Override
+    void set(int r, int c, int num, Side player) {
+        internalSet(sqNum(r, c), square(player, num));
+    }
+
+    @Override
+    void set(int n, int num, Side player) {//NUM is the number of spots
+        internalSet(n, square(player, num));
+        announce();
+    }
+
+    @Override
+    void undo() {
+        // FIXME
+    }
+
+    /** Record the beginning of a move in the undo history. */
+    private void markUndo() {
+        // FIXME
+    }
+
+    /** Set the contents of the square with index IND to SQ. Update counts
+     *  of numbers of squares of each color.  */
+    private void internalSet(int ind, Square sq) {
+        // FIXME
+    	int r = row(ind);
+    	int c = col(ind);
+    	_board[r-1][c-1] = Square.square(sq.getSide(), sq.getSpots());
+    	if (sq.getSide() == RED) {
+    		this.redCount ++;
+    		this.whiteCount --;
+    	} else if (sq.getSide() == BLUE) {
+    		this.whiteCount --;
+    		this.blueCount ++;
+    	} else {
+    		this.whiteCount ++;
+    	}
+    }
+
+    /** Notify all Observers of a change. */
+    private void announce() {
+        setChanged();
+        notifyObservers();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof MutableBoard)) {
+            return obj.equals(this);
+        } else {
+            // REPLACE WITH SOLUTION
+            return false;
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        // REPLACE WITH SOLUTION.  RETURN A NUMBER THAT IS THE SAME FOR BOARDS
+        // WITH IDENTICAL CONTENTS (IT NEED NOT BE DIFFERENT IF THE BOARDS
+        // DIFFER.)  THE CURRENT STATEMENT WORKS, BUT IS NOT PARTICULARLY
+        // EFFICIENT.
+        return 0;
+    }
+
+    /** Private fields */
+    private Square[][] _board;
+    //list of moves
+    private ArrayList<int[]> _moves;
+    /** Counts for colors, to be used for numOfSide */
+    private int redCount;
+    private int blueCount;
+    private int whiteCount;
+    /** total running spot count, to be used for numPieces */
+    private int totalSpots;
+
+    /** stack or queue of overFull squares*/
+    private Stack overFullSquares;
+}
